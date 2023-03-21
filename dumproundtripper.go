@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 )
 
 // New returns a new http.RoundTripper that dumps all request and response to
@@ -21,8 +22,15 @@ type dumproundtripper struct {
 }
 
 func (rt *dumproundtripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	body := true
-	reqbody, err := httputil.DumpRequestOut(req, body)
+	var (
+		dumpbody       bool
+		reqcontenttype = req.Header.Get("Content-Type")
+	)
+	if strings.HasPrefix(reqcontenttype, "application/json") ||
+		strings.HasPrefix(reqcontenttype, "text/plain") {
+		dumpbody = true
+	}
+	reqbody, err := httputil.DumpRequestOut(req, dumpbody)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +40,14 @@ func (rt *dumproundtripper) RoundTrip(req *http.Request) (*http.Response, error)
 		return nil, err
 	}
 
-	respbody, err := httputil.DumpResponse(resp, body)
+	dumpbody = false
+	respcontenttype := resp.Header.Get("Content-Type")
+	if strings.HasPrefix(respcontenttype, "application/json") ||
+		strings.HasPrefix(respcontenttype, "text/plain") {
+		dumpbody = true
+	}
+
+	respbody, err := httputil.DumpResponse(resp, dumpbody)
 	if err != nil {
 		return nil, err
 	}
