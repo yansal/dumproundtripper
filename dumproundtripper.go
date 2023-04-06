@@ -27,7 +27,8 @@ func (rt *dumproundtripper) RoundTrip(req *http.Request) (*http.Response, error)
 		reqcontenttype = req.Header.Get("Content-Type")
 	)
 	if strings.HasPrefix(reqcontenttype, "application/json") ||
-		strings.HasPrefix(reqcontenttype, "text/plain") {
+		strings.HasPrefix(reqcontenttype, "text/plain") &&
+			req.ContentLength < 1e4 {
 		dumpbody = true
 	}
 	reqbody, err := httputil.DumpRequestOut(req, dumpbody)
@@ -43,7 +44,8 @@ func (rt *dumproundtripper) RoundTrip(req *http.Request) (*http.Response, error)
 	dumpbody = false
 	respcontenttype := resp.Header.Get("Content-Type")
 	if strings.HasPrefix(respcontenttype, "application/json") ||
-		strings.HasPrefix(respcontenttype, "text/plain") {
+		strings.HasPrefix(respcontenttype, "text/plain") &&
+			resp.ContentLength < 1e4 {
 		dumpbody = true
 	}
 
